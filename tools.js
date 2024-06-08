@@ -20,6 +20,7 @@ for (let i = 0; i < toolArr.length; i++) {
     if (toolName == "pencil") {
       currentTool = "pencil";
       tool.strokeStyle = "pink";
+      tool.lineWidth = 5;
     } else if (toolName == "eraser") {
       currentTool = "eraser";
       tool.strokeStyle = "white";
