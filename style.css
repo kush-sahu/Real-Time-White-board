@@ -9,15 +9,19 @@
     width: 90px;
     height: 30px;
 }
+.nav:hover {
+    cursor: move;
+  }
+/*
 .sticky {
     height: 10rem;
     width : 6rem;
 
     /*  */
-    position: absolute;
+    /* position: absolute;
     left    : 40vw;
     top     : 40vh;
-}
+} */
 
 .nav {
     border          : 1px solid black;
@@ -33,7 +37,78 @@
     height: 80%;
     width : 100%;
 }
-#board{
-    /* height: 100vh;
-    width: 100vw; */
+
+     
+
+.boardcan{
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+body, html {
+    margin: 0;
+    padding: 0;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    background-color: #09593ee6;
+}
+
+.toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: #c1c5c1;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+canvas {
+    margin-top: 10vh;
+    border: 1px solid black;
+    align-items: center;
+    background-color: #ffffff;
+    
+    
+}
+
+.tool {
+    cursor: pointer;
+}
+
+.input-tag {
+    display: none;
+}
+
+.sticky {
+    position: absolute;
+    background: yellow;
+    padding: 10px;
+    border: 1px solid black;
+}
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    cursor: move;
+}
+
+
+.add1more{
+    margin: auto;
+    
+    position: fixed;
+    right: 3vw;
+    color: blue;
+    background-color: aquamarine;
+    border-radius: 30%;
+    cursor: pointer;
+   
 }

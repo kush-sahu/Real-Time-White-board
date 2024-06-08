@@ -1,185 +1,256 @@
-let pencilElement = document.querySelector("#pencil");
-let earserElement = document.querySelector("#eraser");
-let stickyElement = document.querySelector("#sticky");
-let uploadElement = document.querySelector("upload");
-let downloadElement = document.querySelector("#download");
-let undoElement = document.querySelector("#undo");
-let rediElement = document.querySelector("#redo");
 
 
-//for to design in web pge we use canvas
+
+
+//Select canvas tag and give it A4 size
 let canvas = document.querySelector("#board");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = 1240; // Width of A4 at 300 DPI
+canvas.height = 1754; // Height of A4 at 300 DPI
 let tool = canvas.getContext("2d");
-let toolArr = document.querySelectorAll(".tool");
+
+// Function to add watermark
+function addWatermark() {
+    tool.save();
+    tool.font = "100px Arial";
+    tool.fillStyle = "rgba(0, 0, 0, 0.2)";
+    tool.textAlign = "center";
+    tool.textBaseline = "middle";
+    tool.fillText("kushdev", canvas.width / 2, canvas.height / 2);
+    tool.restore();
+}
+function addcanva(){
+    let canvas = document.querySelector("#board");
+    canvas.width = 1240; // Width of A4 at 300 DPI
+    canvas.height = 1754; // Height of A4 at 300 DPI
+    let tool = canvas.getContext("2d");
+    addWatermark();
+}
+let add1more=document.querySelector(".add1more")
+add1more.addEventListener("click",addcanva);
+
+
+addWatermark();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***************** Tool Selector Logic ***********/
+let toolsArr = document.querySelectorAll(".tool");
 let currentTool = "pencil";
-for (let i = 0; i < toolArr.length; i++) {
-  toolArr[i].addEventListener("click", function (e) {
-    const toolName = toolArr[i].id;
-    if (toolName == "pencil") {
-      currentTool = "pencil";
-      tool.strokeStyle = "pink";
-      tool.lineWidth = 5;
-    } else if (toolName == "eraser") {
-      currentTool = "eraser";
-      tool.strokeStyle = "white";
-      tool.lineWidth = 105;
-    } else if (toolName == "upload") {
-      currentTool = "upload";
-      uploadFile();
-    } else if (toolName == "sticky") {
-      currentTool = "sticky";
-      createSticky();
-    } else if (toolName == "undo") {
-      currentTool = "undo";
-      undoFN();
-    } else if (toolName == "redo") {
-      currentTool = "redo";
-      redoFN();
-    }
-  });
+for (let i = 0; i < toolsArr.length; i++) {
+    toolsArr[i].addEventListener("click", function (e) {
+        const toolName = toolsArr[i].id;
+        if (toolName == "pencil") {
+            currentTool = "pencil";
+            tool.strokeStyle = "blue";
+            tool.lineWidth = 1;
+            console.log("pencil clicked");
+        } else if (toolName == "eraser") {
+            currentTool = "eraser";
+            tool.strokeStyle = "white";
+            tool.lineWidth = 50;
+        } else if (toolName == "download") {
+            console.log("download clicked");
+            currentTool = "download";
+            downloadPDF();
+        } else if (toolName == "sticky") {
+            currentTool = "sticky";
+            createSticky();
+        } else if (toolName == "upload") {
+            currentTool = "upload";
+            console.log(e.target);
+            uploadFile();
+        } else if (toolName == "undo") {
+            currentTool = "undo";
+            undoFN();
+        } else if (toolName == "redo") {
+            console.log("redo clicked");
+            redoFN();
+        }
+    });
 }
 
-
-
-
-let undoStack=[];
-let redoStack=[];
-let isDrawing=false;
-
-
+/*************** Draw Something on Canvas *************/
+let undoStack = [];
+let redoStack = [];
+let isDrawing = false;
+/******* Pencil ***********/
 canvas.addEventListener("mousedown", function (e) {
-  // console.log("x",e.clientX);
-  // console.log("y",e.clientY);
-  let sidx = e.clientX;
-  let sidy = e.clientY;
-  // drawing will start from here
-  tool.beginPath();
-  // jha se press -> canva me
-  let toolBarHeight = getYDelta();
-  tool.moveTo(sidx, sidy - toolBarHeight);
-  isDrawing = true;
-  let pointDesc = {
-    desc: "md",
-    x: sidx,
-    y: sidy - toolBarHeight,
-    color: tool.strokeStyle,
-  };
-  undoStack.push(pointDesc);
+    let { offsetX, offsetY } = e;
+    tool.beginPath();
+    tool.moveTo(offsetX, offsetY);
+    isDrawing = true;
+    let pointDesc = {
+        desc: "md",
+        x: offsetX,
+        y: offsetY,
+        color: tool.strokeStyle,
+        lineWidth: tool.lineWidth
+    }
+    undoStack.push(pointDesc);
+    redoStack = []; // Clear redo stack on new action
 });
-////pencil logic
 canvas.addEventListener("mousemove", function (e) {
-  if (isDrawing == false) return;
-  let eidx = e.clientX;
-  let eidy = e.clientY;
-  let toolBarHeight = getYDelta();
-  tool.lineTo(eidx, eidy - toolBarHeight);
-  tool.stroke();
-  let pointDesc = {
-    desc: "mm",
-    x: eidx,
-    y: eidy - toolBarHeight,
-  };
-  undoStack.push(pointDesc);
+    if (!isDrawing) return;
+    let { offsetX, offsetY } = e;
+    tool.lineTo(offsetX, offsetY);
+    tool.stroke();
+    let pointDesc = {
+        desc: "mm",
+        x: offsetX,
+        y: offsetY,
+        color: tool.strokeStyle,
+        lineWidth: tool.lineWidth
+    }
+    undoStack.push(pointDesc);
 });
 canvas.addEventListener("mouseup", function (e) {
-  isDrawing = false;
+    isDrawing = false;
+    // Store the current state of the canvas in the undo stack
+    undoStack.push({desc: "snapshot", data: tool.getImageData(0, 0, canvas.width, canvas.height)});
+    redraw();
 });
 
-
-// helper function
+/******** Helper Function ****/
 let toolBar = document.querySelector(".toolbar");
 function getYDelta() {
-  let heightOfToolbar = toolBar.getBoundingClientRect().height;
-  return heightOfToolbar;
+    let heightOfToolbar = toolBar.getBoundingClientRect().height;
+    return heightOfToolbar;
 }
 
+function createOuterShell() {
+    let stickyDiv = document.createElement("div");
+    let navDiv = document.createElement("div");
+    let closeDiv = document.createElement("div");
+    let minimizeDiv = document.createElement("div");
 
-//function to create sticky notes
+    // Class styling
+    stickyDiv.setAttribute("class", "sticky");
+    navDiv.setAttribute("class", "nav");
 
-function createSticky(){
+    closeDiv.innerText = "X";
+    minimizeDiv.innerText = "min";
+    // HTML structure
+    stickyDiv.appendChild(navDiv);
+    navDiv.appendChild(minimizeDiv);
+    navDiv.appendChild(closeDiv);
+    document.body.appendChild(stickyDiv);
 
-  // 1. structure
+    /********** Functionality ******/
+    let isMinimized = false;
+    closeDiv.addEventListener("click", function () {
+        stickyDiv.remove();
+    });
+    minimizeDiv.addEventListener("click", function () {
+        let textArea = stickyDiv.querySelector("textarea");
+        textArea.style.display = isMinimized ? "block" : "none";
+        isMinimized = !isMinimized;
+    });
 
+    let isStickyDown = false;
 
-  // <div class="sticky">
-  //   <div class="nav">
-  //     <div class="close">X</div>
-  //       <div class="minimise"></div>
-      
-  //   </div>
-  //   <textarea class="text-area"></textarea>
-  // </div>
+    navDiv.addEventListener("mousedown", function (e) {
+        initialX = e.clientX;
+        initialY = e.clientY;
+        isStickyDown = true;
+    });
+    navDiv.addEventListener("mousemove", function (e) {
+        if (isStickyDown) {
+            let finalX = e.clientX;
+            let finalY = e.clientY;
+            let dx = finalX - initialX;
+            let dy = finalY - initialY;
+            let { top, left } = stickyDiv.getBoundingClientRect();
+            stickyDiv.style.top = top + dy + "px";
+            stickyDiv.style.left = left + dx + "px";
+            initialX = finalX;
+            initialY = finalY;
+        }
+    });
+    navDiv.addEventListener("mouseup", function () {
+        isStickyDown = false;
+    });
+    return stickyDiv;
+}
 
-  // 2. create
-  let stickyDiv=document.createElement("div")
-  let navDiv=document.createElement("div")
-  let closeDiv=document.createElement("div")
-  let minimize=document.createElement("div")
-  let textarea=document.createElement("textarea")
+/******* Create Sticky ******/
+function createSticky() {
+    let stickyDiv = createOuterShell();
+    let textArea = document.createElement("textarea");
+    textArea.setAttribute("class", "text-area");
+    stickyDiv.appendChild(textArea);
+}
 
-  // class styling
+let inputTag = document.querySelector(".input-tag");
+function uploadFile() {
+    inputTag.click();
+    inputTag.addEventListener("change", function () {
+        let data = inputTag.files[0];
+        let img = document.createElement("img");
+        let url = URL.createObjectURL(data);
+        img.src = url;
+        img.setAttribute("class", "upload-img");
+        let stickyDiv = createOuterShell();
+        stickyDiv.appendChild(img);
+    });
+}
 
-  stickyDiv.setAttribute("class", "sticky");
-  navDiv.setAttribute("class","nav")
-  textarea.setAttribute("class", "text-area");
-   
+function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    let pdf = new jsPDF('p', 'pt', [canvas.width, canvas.height]);
+    pdf.addImage(canvas.toDataURL("image/png"), 'PNG', 0, 0, canvas.width, canvas.height);
+    pdf.save("file.pdf");
+}
 
-  closeDiv.innerText="X";
-  minimize.innerText="min"
-  //html structure
+function redraw() {
+    // Clear the canvas
+    tool.clearRect(0, 0, canvas.width, canvas.height);
 
-  stickyDiv.appendChild(navDiv);
-  stickyDiv.appendChild(textarea);
-  navDiv.appendChild(minimize);
-  navDiv.appendChild(closeDiv);
-
-document.body.appendChild(stickyDiv);
-
-// code for minimization
-
-let isMinimize=false;
-closeDiv.addEventListener("click",function(){
-  stickyDiv.remove();
-})
-minimize.addEventListener("click",function(){
-  textarea.style.display=isMinimize ?"block":"none";
-  isMinimize=!isMinimize
-})
-
-let isStickyDown = false;
-// navbar -> mouse down , mouse mousemove, mouse up 
-
-navDiv.addEventListener("mousedown", function (e) {
-    // initial point
-    initialX = e.clientX;
-    initialY = e.clientY;
-    console.log("mousedown", initialX, initialY);
-    isStickyDown = true;
-})
-navDiv.addEventListener("mousemove", function (e) {
-    if (isStickyDown == true) {
-        // final point 
-        let finalX = e.clientX;
-        let finalY = e.clientY;
-        console.log("mousemove", finalX, finalY);
-        //  distance
-        let dx = finalX - initialX;
-        let dy = finalY - initialY;
-        //  move sticky
-        //original top left
-        let { top, left } = stickyDiv.getBoundingClientRect()
-        // stickyPad.style.top=10+"px";
-        stickyDiv.style.top = top + dy + "px";
-        stickyDiv.style.left = left + dx + "px";
-        initialX = finalX;
-        initialY = finalY;
+    // Redraw all the points in the undo stack
+    for (let i = 0; i < undoStack.length; i++) {
+        let { desc, data, x, y, color, lineWidth } = undoStack[i];
+        if (desc === "snapshot") {
+            tool.putImageData(data, 0, 0);
+        } else if (desc === "md") {
+            tool.beginPath();
+            tool.strokeStyle = color || tool.strokeStyle;
+            tool.lineWidth = lineWidth || tool.lineWidth;
+            tool.moveTo(x, y);
+        } else if (desc === "mm") {
+            tool.lineTo(x, y);
+            tool.stroke();
+        }
     }
-})
-navDiv.addEventListener("mouseup", function () {
-    isStickyDown = false;
-})
-return stickyDiv;
-
+    // Redraw the watermark after undo/redo
+    addWatermark();
 }
+
+function undoFN() {
+    if (undoStack.length > 0) {
+        redoStack.push(undoStack.pop());
+        redraw();
+    }
+}
+
+function redoFN() {
+    if (redoStack.length > 0) {
+        undoStack.push(redoStack.pop());
+        redraw();
+    }
+}
+
+// Add watermark when the page loads
+
