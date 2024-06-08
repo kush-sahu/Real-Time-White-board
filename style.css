@@ -1,0 +1,39 @@
+.toolbar-options{
+    display: flex;
+}
+.tool-img{
+    height: 3vh;
+    width: 3vw;
+}
+.input-tag{
+    width: 90px;
+    height: 30px;
+}
+.sticky {
+    height: 10rem;
+    width : 6rem;
+
+    /*  */
+    position: absolute;
+    left    : 40vw;
+    top     : 40vh;
+}
+
+.nav {
+    border          : 1px solid black;
+    height          : 20%;
+    background-color: aquamarine;
+    display         : flex;
+    justify-content : flex-end;
+    gap             : 1rem;
+
+}
+
+.text-area {
+    height: 80%;
+    width : 100%;
+}
+#board{
+    /* height: 100vh;
+    width: 100vw; */
+}
